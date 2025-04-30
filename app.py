@@ -15,15 +15,18 @@ from dotenv import load_dotenv
 
 app = Flask(__name__)
 login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
+login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 # Registrasi blueprint auth
 app.register_blueprint(auth)
 
-app.secret_key = 'supersecretkey'
+
+app.secret_key = os.environ.get('SECRET_KEY', 'fallbacksecretkey')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 db.init_app(app)
 with app.app_context():
     db.create_all()
@@ -49,10 +52,6 @@ def send_upload_notification(user_email, project_name):
     )
     mail.send(msg)
 
-login_manager = LoginManager()
-login_manager.login_view = 'login'
-login_manager.init_app(app)
-
 UPLOAD_FOLDER = 'static/uploads'
 EXPORT_FOLDER = 'exported'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -65,14 +64,13 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = User.query.filter_by(username=username).first()
+        ...
         if user and check_password_hash(user.password, password):
             login_user(user)
+            print("✅ Berhasil login")  # debug
             return redirect(url_for('dashboard'))
         else:
-            return render_template('login.html', error="Username atau password salah")
+            flash("Username atau password salah", "danger")
     return render_template('login.html')
 
 @app.route('/logout')
