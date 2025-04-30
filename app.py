@@ -10,6 +10,8 @@ import io
 import pdfkit
 from utils.file_processing import bersihkan_excel
 from flask_mail import Mail, Message
+import requests
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -33,6 +35,10 @@ app.config['MAIL_USERNAME'] = 'your_email@gmail.com'  # ganti
 app.config['MAIL_PASSWORD'] = 'your_app_password'      # ganti
 
 mail = Mail(app)
+
+load_dotenv()
+
+API_KEY = os.getenv("30Vxikyyve18FPPcltK9CEN1Sp5ONRzWeIjZLhL3EN4S1Xj6mbE6CGk6FigDY869")
 
 def send_upload_notification(user_email, project_name):
     msg = Message(
@@ -240,13 +246,29 @@ def export_single_project_excel(project_id):
 @app.route('/dashboard/project_pdf/<int:project_id>')
 @login_required
 def export_single_project_pdf(project_id):
-    project = Project.query.get_or_404(project_id)
+    project = Project.query.filter_by(id=project_id, user_id=current_user.id).first_or_404()
     details = ProjectDetail.query.filter_by(project_id=project.id).all()
-    rendered = render_template('export_pdf_template.html', project=project, details=details)
 
-    config = pdfkit.configuration(wkhtmltopdf=r'C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
-    pdf = pdfkit.from_string(rendered, False, configuration=config)
-    return send_file(io.BytesIO(pdf), download_name=f"{project.project_name}.pdf", as_attachment=True)
+    html_content = render_template('export_pdf_template.html', project=project, details=details)
+
+    # API html2pdf.app
+    api_key = '30Vxikyyve18FPPcltK9CEN1Sp5ONRzWeIjZLhL3EN4S1Xj6mbE6CGk6FigDY869'
+    response = requests.post(
+        'https://api.html2pdf.app/v1/generate',
+        json={
+            'html': html_content,
+            'apiKey': api_key
+        }
+    )
+
+    if response.status_code == 200:
+        return send_file(
+            io.BytesIO(response.content),
+            download_name=f"{project.project_name}.pdf",
+            as_attachment=True
+        )
+    else:
+        return f"❌ Gagal generate PDF. Status: {response.status_code}", 500
 
 @app.route('/dashboard/export_pdf')
 @login_required
