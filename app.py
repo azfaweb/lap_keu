@@ -80,8 +80,7 @@ def none_to_dash(value):
 
 @app.route('/')
 def home():
-    return redirect(url_for('dashboard')) if current_user.is_authenticated else redirect(url_for('login'))
-
+    return redirect(url_for('dashboard')) if current_user.is_authenticated else redirect(url_for('auth.login'))
 
 @app.route('/setup', methods=['GET', 'POST'])
 @login_required
