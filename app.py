@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 app = Flask(__name__)
 login_manager = LoginManager()
-login_manager.login_view = 'login'
+login_manager.login_view = 'login.login'
 login_manager.init_app(app)
 
 # Registrasi blueprint auth
