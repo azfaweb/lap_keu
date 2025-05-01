@@ -26,7 +26,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'fallbacksecretkey')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_COOKIE_SECURE'] = False
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SAMESITE'] = 'none'
 db.init_app(app)
 with app.app_context():
     db.create_all()
@@ -60,18 +60,6 @@ os.makedirs(EXPORT_FOLDER, exist_ok=True)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        ...
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            print("✅ Berhasil login")  # debug
-            return redirect(url_for('dashboard'))
-        else:
-            flash("Username atau password salah", "danger")
-    return render_template('login.html')
 
 @app.route('/logout')
 @login_required
